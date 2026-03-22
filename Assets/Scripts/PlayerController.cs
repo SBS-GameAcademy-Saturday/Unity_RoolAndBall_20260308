@@ -9,6 +9,8 @@ public class PlayerController : MonoBehaviour
     public GameObject winTextObject;
     public int winCount = 11;
 
+    public float decelationRate = 1;
+
     private Rigidbody _rb;
 
     private float _movementX;
@@ -28,7 +30,15 @@ public class PlayerController : MonoBehaviour
     private void FixedUpdate()
     {
         Vector3 movement = new Vector3(_movementX, 0.0f, _movementY);
-        _rb.AddForce(movement * speed);
+        if(movement.magnitude <= 0.1)
+        {
+            _rb.linearVelocity = Vector3.Lerp(_rb.linearVelocity, Vector3.zero, 
+                decelationRate * Time.deltaTime);
+        }
+        else
+        {
+            _rb.AddForce(movement * speed);
+        }
     }
 
     public void OnMove(InputAction.CallbackContext context)
@@ -49,12 +59,25 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("Enemy"))
+        {
+            // Destroy the current object
+            Destroy(gameObject);
+            // Update the winText to display "You Lose!"
+            winTextObject.gameObject.SetActive(true);
+            winTextObject.GetComponent<TextMeshProUGUI>().text = "You Lose!";
+        }
+    }
+
     void SetCountText()
     {
         countText.text = "Count: " + _counter.ToString();
         if(_counter >= winCount)
         {
             winTextObject.SetActive(true);
+            Destroy(GameObject.FindGameObjectWithTag("Enemy"));
         }
     }
 }
